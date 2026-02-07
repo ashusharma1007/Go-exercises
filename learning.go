@@ -5,7 +5,6 @@ package main
 
 import (
 	"fmt"
-	"sync"
 )
 
 // type Product struct {
@@ -24,76 +23,54 @@ import (
 // 	}
 // }
 
-func fun(s string) {
-	for i := 0; i < 3; i++ {
-		fmt.Println(s)
+// func fun(s string) {
+// 	for i := 0; i < 3; i++ {
+// 		fmt.Println(s)
 
+// 	}
+// }
+
+// func genMSg(ch <-chan string){
+// 	msg := "get the msg"
+
+// }
+
+func ch1e(ch chan int, n int) {
+	if n%2 == 0 {
+		ch <- n
+	}
+}
+
+func ch2o(ch chan int, n int) {
+	if n%2 == 1 {
+		ch <- n
 	}
 }
 
 func main() {
 
-	ch := make(chan int, 3)
-	var wg sync.WaitGroup
-	// var data int
-
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			ch <- i
-
-			// fmt.Println(i)
-
-		}(i)
-
-	}
+	ch1 := make(chan int, 5)
+	ch2 := make(chan int, 5)
 
 	go func() {
-
-		wg.Wait()
-		close(ch)
+		for i := 1; i < 11; i++ {
+			ch1e(ch1, i)
+			ch2o(ch2, i)
+		}
+		close(ch1)
+		close(ch2)
 	}()
-	for cval := range ch {
-		fmt.Printf("value from ch: %v \n", cval)
+
+	for i := 0; i < 10; i++ {
+		select {
+		case m1, ok := <-ch1:
+			if ok {
+				fmt.Println("Even:", m1)
+			}
+		case m2, ok := <-ch2:
+			if ok {
+				fmt.Println("Odd:", m2)
+			}
+		}
 	}
 }
-
-/*
-func main() {
-	// Your code starts here
-	fmt.Println("Hello, Go!")
-
-	// Try calling functions below
-	greet("Learner")
-	result := add(5, 3)
-	fmt.Println("5 + 3 =", result)
-
-	// Practice with variables
-	name := "Go Developer"
-	age := 25
-	fmt.Printf("Name: %s, Age: %d\n", name, age)
-}
-*/
-
-// // Example function: greets a person
-// func greet(name string) {
-// 	fmt.Printf("Hello, %s!\n", name)
-// }
-
-// // Example function: adds two numbers
-// func add(a, b int) int {
-// 	return a + b
-// }
-
-// // Example function: subtracts two numbers
-// func subtract(a, b int) int {
-// 	return a - b
-// }
-
-// // Example function: multiplies two numbers
-// func multiply(a, b int) int {
-// 	return a * b
-// }
-
-// Add your own functions below to practice
