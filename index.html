@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operational Transformation Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .info {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e74c3c;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #2ecc71;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .editor-container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .log-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-header {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            color: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .clear-log {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .clear-log:hover {
+            background: #c0392b;
+        }
+
+        #log {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+
+        .log-entry.sent {
+            border-left-color: #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .log-entry.received {
+            border-left-color: #2ecc71;
+            background: rgba(46, 204, 113, 0.1);
+        }
+
+        .log-entry.error {
+            border-left-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .instructions h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Operational Transformation Demo</h1>
+        <p class="subtitle">Real-time collaborative text editor with OT</p>
+
+        <div class="info">
+            <div class="status">
+                <div class="status-item">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="status">Disconnected</span>
+                </div>
+                <div class="status-item">
+                    <strong>Client ID:</strong> <span id="clientId">-</span>
+                </div>
+                <div class="status-item">
+                    <strong>Document Version:</strong> <span id="version">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="editor-container">
+            <textarea id="editor" placeholder="Start typing... Open this page in multiple browser windows to see real-time collaboration!"></textarea>
+        </div>
+
+        <div class="log-container">
+            <div class="log-header">
+                <span>Operation Log</span>
+                <button class="clear-log" onclick="clearLog()">Clear Log</button>
+            </div>
+            <div id="log"></div>
+        </div>
+
+        <div class="instructions">
+            <h3>How It Works</h3>
+            <ol>
+                <li>Open this page in <strong>multiple browser windows/tabs</strong> (try 2-3 windows)</li>
+                <li>Start typing in any window - you'll see the changes appear in all windows instantly</li>
+                <li>Watch the <strong>Operation Log</strong> to see how OT transforms operations</li>
+                <li>Try typing simultaneously in different windows to see conflict resolution</li>
+            </ol>
+            <p style="margin-top: 15px;"><strong>Tip:</strong> Try inserting text at the same position in different windows to see how OT handles conflicts!</p>
+        </div>
+    </div>
+
+    <script>
+        const clientId = 'client-' + Math.random().toString(36).substr(2, 9);
+        const editor = document.getElementById('editor');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('status');
+        const versionText = document.getElementById('version');
+        const clientIdText = document.getElementById('clientId');
+        const logDiv = document.getElementById('log');
+
+        let ws;
+        let documentVersion = 0;
+        let lastValue = '';
+        let cursorPosition = 0;
+
+        clientIdText.textContent = clientId;
+
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws?clientId=${clientId}`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Connected';
+                log('Connected to server', 'received');
+            };
+
+            ws.onclose = () => {
+                statusDot.classList.remove('connected');
+                statusText.textContent = 'Disconnected';
+                log('Disconnected from server', 'error');
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                log('WebSocket error', 'error');
+            };
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+
+                if (msg.type === 'init') {
+                    editor.value = msg.content;
+                    lastValue = msg.content;
+                    documentVersion = msg.version;
+                    versionText.textContent = documentVersion;
+                    log(`Initialized with document (v${msg.version}): "${msg.content}"`, 'received');
+                } else if (msg.type === 'operation') {
+                    const op = msg.operation;
+                    log(`Received ${op.type} at pos ${op.pos}${op.char ? `: "${op.char}"` : ''}`, 'received');
+
+                    // Save cursor position
+                    cursorPosition = editor.selectionStart;
+
+                    // Apply operation to local document
+                    if (op.type === 'insert') {
+                        const before = editor.value.substring(0, op.pos);
+                        const after = editor.value.substring(op.pos);
+                        editor.value = before + op.char + after;
+
+                        // Adjust cursor if needed
+                        if (cursorPosition >= op.pos) {
+                            cursorPosition++;
+                        }
+                    } else if (op.type === 'delete') {
+                        const before = editor.value.substring(0, op.pos);
+                        const after = editor.value.substring(op.pos + 1);
+                        editor.value = before + after;
+
+                        // Adjust cursor if needed
+                        if (cursorPosition > op.pos) {
+                            cursorPosition--;
+                        }
+                    }
+
+                    lastValue = editor.value;
+
+                    // Restore cursor position
+                    editor.selectionStart = cursorPosition;
+                    editor.selectionEnd = cursorPosition;
+
+                    documentVersion++;
+                    versionText.textContent = documentVersion;
+                }
+            };
+        }
+
+        // Detect changes and send operations
+        editor.addEventListener('input', (e) => {
+            const newValue = editor.value;
+            const cursorPos = editor.selectionStart;
+
+            // Detect what changed
+            if (newValue.length > lastValue.length) {
+                // Insertion
+                const pos = findInsertPosition(lastValue, newValue);
+                const char = newValue[pos];
+
+                const operation = {
+                    type: 'insert',
+                    pos: pos,
+                    char: char
+                };
+
+                sendOperation(operation);
+                log(`Sent insert at pos ${pos}: "${char}"`, 'sent');
+            } else if (newValue.length < lastValue.length) {
+                // Deletion
+                const pos = findDeletePosition(lastValue, newValue);
+
+                const operation = {
+                    type: 'delete',
+                    pos: pos
+                };
+
+                sendOperation(operation);
+                log(`Sent delete at pos ${pos}`, 'sent');
+            }
+
+            lastValue = newValue;
+        });
+
+        function findInsertPosition(oldStr, newStr) {
+            for (let i = 0; i < newStr.length; i++) {
+                if (i >= oldStr.length || oldStr[i] !== newStr[i]) {
+                    return i;
+                }
+            }
+            return newStr.length - 1;
+        }
+
+        function findDeletePosition(oldStr, newStr) {
+            for (let i = 0; i < oldStr.length; i++) {
+                if (i >= newStr.length || oldStr[i] !== newStr[i]) {
+                    return i;
+                }
+            }
+            return 0;
+        }
+
+        function sendOperation(operation) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const msg = {
+                    type: 'operation',
+                    operation: operation,
+                    version: documentVersion
+                };
+                ws.send(JSON.stringify(msg));
+                documentVersion++;
+                versionText.textContent = documentVersion;
+            }
+        }
+
+        connectWebSocket();
+    </script>
+</body>
+</html>

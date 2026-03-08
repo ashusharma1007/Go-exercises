@@ -1,0 +1,29 @@
+# Binaries
+ot-collaborative-editor
+ot-editor
+
+# Learning files
+learning.go
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
